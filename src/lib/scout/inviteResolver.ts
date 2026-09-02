@@ -1,19 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getSharedTeamNamesForEmail, getSharedGameIdsForEmail } from "./teamSharing";
 
-export const DEFAULT_OFFLINE_GAME = {
-  id: "demo-game-local-1",
-  user_id: "local-user-id",
-  team_name: "Brasil Handebol",
-  opponent: "Adversário FC",
-  game_date: new Date().toISOString().split("T")[0],
-  competition: "Liga Nacional",
-  category: "Adulto Masculino",
-  goalkeeper_name: "Gabriel Maia (#1)",
-  status: "in_progress",
-  created_at: new Date().toISOString(),
-};
-
 /**
  * 1. RESOLUÇÃO DE CONVITES PENDENTES NO LOGIN (MATCH DE USUÁRIO)
  */
@@ -49,7 +36,7 @@ export async function resolvePendingInvitesOnLogin(userId: string, email: string
 }
 
 /**
- * 2. QUERY DE BUSCA DO DASHBOARD (COM FALLBACK PARA MODO OFFLINE / LOCALSTORAGE)
+ * 2. QUERY DE BUSCA DO DASHBOARD (RETORNA JOGOS REAIS DA CONTA OU LOCALSTORAGE)
  */
 export async function fetchDashboardGamesForUser(userId?: string | null, email?: string | null) {
   const normEmail = email ? email.trim().toLowerCase() : null;
@@ -65,9 +52,7 @@ export async function fetchDashboardGamesForUser(userId?: string | null, email?:
   }
 
   if (isOffline) {
-    if (localGames.length > 0) return localGames;
-    // Se ainda não criou nenhum jogo no modo offline, fornece o jogo demonstrativo
-    return [DEFAULT_OFFLINE_GAME];
+    return localGames;
   }
 
   try {
@@ -79,7 +64,7 @@ export async function fetchDashboardGamesForUser(userId?: string | null, email?:
     if (error) throw error;
 
     if (!data || data.length === 0) {
-      return localGames.length > 0 ? localGames : [DEFAULT_OFFLINE_GAME];
+      return localGames;
     }
 
     const sharedTeams = getSharedTeamNamesForEmail(normEmail);
@@ -99,7 +84,7 @@ export async function fetchDashboardGamesForUser(userId?: string | null, email?:
 
     return Array.from(gameMap.values());
   } catch (err) {
-    console.warn("Supabase indisponível. Carregando dados locais do computador:", err);
-    return localGames.length > 0 ? localGames : [DEFAULT_OFFLINE_GAME];
+    console.warn("Supabase indisponível. Carregando dados locais:", err);
+    return localGames;
   }
 }
