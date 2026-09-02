@@ -1,0 +1,9 @@
+Partida,Periodo,Tempo,Equipe,Setor,Gol_Jogador,Assistencia,Jogada,Resultado,Avaliacao,Quadrante_Gol
+UFAL vs Nobre,1º Tempo,01:15,UFAL,Ataque,10,7,Armador Central,Gol,Sucesso,A1
+UFAL vs Nobre,1º Tempo,02:40,Nobre,Defesa,9,14,Pivô,Defesa,Erro,C3
+UFAL vs Nobre,1º Tempo,04:10,UFAL,Ataque,10,,Ponta Esquerda,Gol,Sucesso,A3
+UFAL vs Nobre,1º Tempo,05:55,UFAL,Defesa,2,,Falta,Falta,Neutro,
+UFAL vs Nobre,1º Tempo,07:20,Nobre,Defesa,7,,Armador Direito,Gol,Sucesso,B2
+UFAL vs Nobre,1º Tempo,09:12,UFAL,Ataque,5,10,Ponta Direita,Trave,Neutro,B3
+UFAL vs Nobre,1º Tempo,11:30,UFAL,Ataque,10,,7 Metros,Gol,Sucesso,C1
+UFAL vs Nobre,1º Tempo,14:05,Nobre,Defesa,11,,Contra-ataque,Defesa,Erro,C2
