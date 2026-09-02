@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, isRedirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -22,10 +22,9 @@ export const Route = createFileRoute("/_authenticated")({
       }
       return { user: data.user };
     } catch (err: any) {
-      if (err && typeof err === "object" && "to" in err) {
+      if (isRedirect(err)) {
         throw err;
       }
-      // Se o servidor Supabase estiver pausado ou sem internet ("Failed to fetch"), ativa o Modo Offline automaticamente
       if (typeof window !== "undefined") {
         localStorage.setItem("handball_scout_offline_user", "true");
       }
