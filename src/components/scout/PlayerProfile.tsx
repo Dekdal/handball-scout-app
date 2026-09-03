@@ -24,8 +24,8 @@ export function PlayerProfile({ shots, teamName, game }: Props) {
   // Lista de camisas do nosso time
   const ourPlayerNumbers = Array.from(
     new Set(
-      shots
-        .filter((s) => !s.possession_team || s.possession_team.trim().toLowerCase() === teamName.trim().toLowerCase())
+      (shots || [])
+        .filter((s) => s && (!s.possession_team || String(s.possession_team).trim().toLowerCase() === String(teamName || "").trim().toLowerCase()))
         .flatMap((s) => [s.player_number, s.assist_number])
         .filter((n): n is number => n != null)
     )
@@ -34,8 +34,8 @@ export function PlayerProfile({ shots, teamName, game }: Props) {
   // Lista de camisas do time adversário
   const oppPlayerNumbers = Array.from(
     new Set(
-      shots
-        .filter((s) => Boolean(s.possession_team) && s.possession_team.trim().toLowerCase() !== teamName.trim().toLowerCase())
+      (shots || [])
+        .filter((s) => s && Boolean(s.possession_team) && String(s.possession_team).trim().toLowerCase() !== String(teamName || "").trim().toLowerCase())
         .flatMap((s) => [s.player_number, s.assist_number])
         .filter((n): n is number => n != null)
     )
@@ -50,12 +50,12 @@ export function PlayerProfile({ shots, teamName, game }: Props) {
     setSelectedPlayer("ALL");
   };
 
-  const isOurTeamSelected = selectedTeam.trim().toLowerCase() === teamName.trim().toLowerCase();
+  const isOurTeamSelected = String(selectedTeam || "").trim().toLowerCase() === String(teamName || "").trim().toLowerCase();
 
   const isShotOfSelectedTeam = (s: Shot) => {
-    if (!s.possession_team) return isOurTeamSelected;
-    const normShotTeam = s.possession_team.trim().toLowerCase();
-    const normTeamName = teamName.trim().toLowerCase();
+    if (!s || !s.possession_team) return isOurTeamSelected;
+    const normShotTeam = String(s.possession_team).trim().toLowerCase();
+    const normTeamName = String(teamName || "").trim().toLowerCase();
     return isOurTeamSelected ? normShotTeam === normTeamName : normShotTeam !== normTeamName;
   };
 

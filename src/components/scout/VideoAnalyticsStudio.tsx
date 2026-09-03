@@ -76,9 +76,12 @@ export function VideoAnalyticsStudio({ game, shots, teamName, onAddShot, onRemov
 
   // Aplicação dos Filtros Combinados com Memoização
   const filteredShots = useMemo(() => {
-    return shots.filter((s) => {
+    return (shots || []).filter((s) => {
+      if (!s) return false;
       if (filterTeam !== "all") {
-        const matchTeam = filterTeam === teamName ? (!s.possession_team || s.possession_team === teamName) : s.possession_team === opponentName;
+        const matchTeam = filterTeam === teamName
+          ? (!s.possession_team || String(s.possession_team).trim().toLowerCase() === String(teamName || "").trim().toLowerCase())
+          : (Boolean(s.possession_team) && String(s.possession_team).trim().toLowerCase() !== String(teamName || "").trim().toLowerCase());
         if (!matchTeam) return false;
       }
       if (filterPlayer !== "all" && s.player_number !== Number(filterPlayer) && s.assist_number !== Number(filterPlayer)) {
