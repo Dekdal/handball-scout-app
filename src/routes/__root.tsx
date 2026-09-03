@@ -39,6 +39,15 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+
+    // Auto-reload se houver desencontro de hashes de JS (Vite Module Import Error)
+    if (
+      error?.message &&
+      (error.message.includes("Failed to fetch dynamically imported module") ||
+        error.message.includes("Importing a module script failed"))
+    ) {
+      window.location.reload();
+    }
   }, [error]);
 
   return (

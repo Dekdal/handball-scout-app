@@ -19,6 +19,10 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
     />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
     <title>GoalScout — Scout de Goleiros e Análise Tática de Handebol</title>
     <meta
       name="description"
@@ -29,7 +33,14 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // Desativar cache do Service Worker para garantir atualizações em tempo real sem Ctrl+F5
+      // Auto-reload se houver incompatibilidade de chunk do Vite
+      window.addEventListener('error', function(e) {
+        if (e && e.message && (e.message.indexOf('Failed to fetch dynamically imported module') !== -1 || e.message.indexOf('Importing a module script failed') !== -1)) {
+          window.location.reload();
+        }
+      });
+
+      // Desativar cache do Service Worker para garantir atualizações em tempo real
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
           for (let registration of registrations) {
