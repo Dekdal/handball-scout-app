@@ -329,6 +329,7 @@ export function VideoAnalyticsStudio({ game, shots, teamName, onAddShot, onRemov
           shots={shots}
           onSubmit={(draft) => onAddShot?.(draft)}
           onRemoveShot={onRemoveShot}
+          onUpdateShot={onUpdateShot}
         />
       ) : (
         /* MODO STUDIO (PLAYLISTS E VÍDEO FILTRADO) */

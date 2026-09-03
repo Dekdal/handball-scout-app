@@ -202,6 +202,45 @@ async function deleteShotApi(gameId: string, shotId: string) {
   if (error) throw error;
 }
 
+async function updateShotApi(gameId: string, shotId: string, updates: any) {
+  let dbResult = updates.result;
+  if (updates.result && (updates.result === "perda" || updates.result.startsWith("cartao_") || updates.result.includes("2min")) && updates.turnover_reason) {
+    dbResult = `${updates.result}:${updates.turnover_reason}`;
+  }
+
+  if (updates.shot_origin_x != null && updates.shot_origin_y != null) {
+    dbResult = `${dbResult}|xy:${updates.shot_origin_x},${updates.shot_origin_y}`;
+  }
+
+  if (updates.possession_team) {
+    dbResult = `${dbResult}|poss:${updates.possession_team}`;
+  }
+
+  const payload: any = {};
+  if (updates.player_number !== undefined) payload.player_number = updates.player_number;
+  if (updates.assist_number !== undefined) payload.assist_number = updates.assist_number;
+  if (updates.position) payload.position = updates.position;
+  if (updates.shot_type) payload.shot_type = updates.shot_type;
+  if (updates.zone) payload.zone = updates.zone;
+  if (dbResult) payload.result = dbResult;
+  if (updates.possession_team) payload.possession_team = updates.possession_team;
+  if (updates.sector) payload.sector = updates.sector;
+  if (updates.goalkeeper_name) payload.goalkeeper_name = updates.goalkeeper_name;
+  if (updates.notes !== undefined) payload.notes = updates.notes;
+  if (updates.defensive_sector !== undefined) payload.defensive_sector = updates.defensive_sector;
+
+  const { data, error } = await supabase.from("shots").update(payload).eq("id", shotId).select().single();
+  if (error) {
+    delete payload.possession_team;
+    delete payload.sector;
+    delete payload.defensive_sector;
+    const fallback = await supabase.from("shots").update(payload).eq("id", shotId).select().single();
+    if (fallback.error) throw fallback.error;
+    return fallback.data;
+  }
+  return data;
+}
+
 function rawToShot(r: RawShot): Shot {
   let res = r.result || "";
   let reason: string | null = r.turnover_reason || null;
@@ -399,6 +438,18 @@ function GameScoutPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shots", gameId] });
       toast.success("Lance excluído com sucesso!");
+    },
+  });
+
+  const updateShot = useMutation({
+    mutationFn: ({ shotId, updates }: { shotId: string; updates: any }) => updateShotApi(gameId, shotId, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shots", gameId] });
+      toast.success("Lance atualizado com sucesso!");
+    },
+    onError: (err: any) => {
+      console.error("Erro ao atualizar lance:", err);
+      toast.error("Erro ao atualizar lance: " + (err?.message || "Tente novamente"));
     },
   });
 
@@ -631,6 +682,7 @@ function GameScoutPage() {
             teamName={game.team_name}
             onAddShot={(draft) => addShot.mutate(draft)}
             onRemoveShot={(shotId) => removeShot.mutate(shotId)}
+            onUpdateShot={(shotId, updates) => updateShot.mutate({ shotId, updates })}
             readOnly={isJogador}
           />
         </div>

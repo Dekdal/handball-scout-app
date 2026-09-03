@@ -36,6 +36,7 @@ interface Props {
   shots: Shot[];
   onSubmit: (draft: any) => void;
   onRemoveShot?: (shotId: string) => void;
+  onUpdateShot?: (shotId: string, updates: any) => void;
   defaultGoalkeeper?: string;
   onUpdateGoalkeeperName?: (oldName: string, newName: string) => void;
 }
@@ -57,6 +58,7 @@ export function VideoFirstTagging({
   shots,
   onSubmit,
   onRemoveShot,
+  onUpdateShot,
   defaultGoalkeeper,
   onUpdateGoalkeeperName,
 }: Props) {
@@ -192,6 +194,81 @@ export function VideoFirstTagging({
   const [selectedSanctionReason, setSelectedSanctionReason] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [dominantHand, setDominantHand] = useState<string>("destra");
+
+  // ESTADOS DO MODAL DE EDIÇÃO PONTUAL DE LANCES
+  const [editingShot, setEditingShot] = useState<Shot | null>(null);
+  const [editPlayerNum, setEditPlayerNum] = useState<string>("");
+  const [editAssistNum, setEditAssistNum] = useState<string>("");
+  const [editDefensivePlayerNum, setEditDefensivePlayerNum] = useState<string>("");
+  const [editPosition, setEditPosition] = useState<Position>("ponta_esq");
+  const [editShotType, setEditShotType] = useState<ShotType>("6m");
+  const [editZone, setEditZone] = useState<Zone | null>("B2");
+  const [editResult, setEditResult] = useState<ShotResult>("gol");
+  const [editPossession, setEditPossession] = useState<string>(teamName);
+  const [editGkName, setEditGkName] = useState<string>("");
+  const [editNotes, setEditNotes] = useState<string>("");
+
+  const handleOpenEditModal = (s: Shot) => {
+    setEditingShot(s);
+    setEditPlayerNum(s.player_number != null ? String(s.player_number) : "");
+    setEditAssistNum(s.assist_number != null ? String(s.assist_number) : "");
+
+    let defNum = "";
+    if (s.defensive_sector && s.defensive_sector.startsWith("defensor_")) {
+      defNum = s.defensive_sector.replace("defensor_", "");
+    } else if (s.notes && s.notes.includes("Defensor #")) {
+      const match = s.notes.match(/Defensor #(\d+)/);
+      if (match) defNum = match[1];
+    }
+    setEditDefensivePlayerNum(defNum);
+
+    setEditPosition(s.position || "ponta_esq");
+    setEditShotType(s.shot_type || "6m");
+    setEditZone(s.zone || "B2");
+
+    let rawRes = s.result || "gol";
+    if (rawRes.includes("|")) rawRes = rawRes.split("|")[0] as ShotResult;
+    if (rawRes.includes(":")) rawRes = rawRes.split(":")[0] as ShotResult;
+    setEditResult(rawRes as ShotResult);
+
+    setEditPossession(s.possession_team || teamName);
+    setEditGkName(s.goalkeeper_name || "");
+    setEditNotes(s.notes || "");
+  };
+
+  const handleSaveEditedShot = () => {
+    if (!editingShot) return;
+    if (!onUpdateShot) {
+      toast.error("Função de atualização não configurada");
+      return;
+    }
+
+    const defensiveTeamName = editPossession === teamName ? opponentName : teamName;
+    const defensiveNote = editDefensivePlayerNum.trim()
+      ? `Defensor #${editDefensivePlayerNum.trim()} (${defensiveTeamName})`
+      : "";
+
+    let cleanedUserNotes = editNotes.trim();
+    if (cleanedUserNotes.includes("Defensor #")) {
+      cleanedUserNotes = cleanedUserNotes.split("|").filter((part) => !part.includes("Defensor #")).join("|").trim();
+    }
+    const combinedNotes = [defensiveNote, cleanedUserNotes].filter(Boolean).join(" | ");
+
+    onUpdateShot(editingShot.id, {
+      player_number: editPlayerNum ? Number(editPlayerNum) : null,
+      assist_number: editAssistNum ? Number(editAssistNum) : null,
+      position: editPosition,
+      shot_type: editShotType,
+      zone: editZone || "B2",
+      result: editResult,
+      possession_team: editPossession,
+      goalkeeper_name: editGkName.trim() || undefined,
+      notes: combinedNotes || null,
+      defensive_sector: editDefensivePlayerNum ? `defensor_${editDefensivePlayerNum.trim()}` : null,
+    });
+
+    setEditingShot(null);
+  };
 
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
@@ -1060,6 +1137,150 @@ export function VideoFirstTagging({
         </DialogContent>
       </Dialog>
 
+      {/* MODAL DE EDIÇÃO PONTUAL DE LANCE */}
+      <Dialog open={editingShot !== null} onOpenChange={(open) => !open && setEditingShot(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary font-bold text-base">
+              <Pencil className="h-5 w-5 text-accent" />
+              Editar Detalhes do Lance Registrado
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Altere a posição, camisa do atleta, zona do gol, goleiro ou resultado. As estatísticas e perfil do atleta serão atualizados automaticamente!
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 md:grid-cols-12 py-2">
+            <div className="md:col-span-6 space-y-3">
+              <div>
+                <Label className="text-xs font-bold text-muted-foreground">Equipe em Posse:</Label>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  <Button
+                    size="sm"
+                    type="button"
+                    variant={editPossession === teamName ? "default" : "outline"}
+                    className="text-xs font-bold"
+                    onClick={() => setEditPossession(teamName)}
+                  >
+                    🛡️ {teamName}
+                  </Button>
+                  <Button
+                    size="sm"
+                    type="button"
+                    variant={editPossession === opponentName ? "default" : "outline"}
+                    className="text-xs font-bold"
+                    onClick={() => setEditPossession(opponentName)}
+                  >
+                    ⚠️ {opponentName}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Label className="text-xs font-semibold">Nº Atacante</Label>
+                  <Input
+                    value={editPlayerNum}
+                    onChange={(e) => setEditPlayerNum(e.target.value.replace(/\D/g, ""))}
+                    className="h-8 text-xs font-bold"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Nº Assist.</Label>
+                  <Input
+                    value={editAssistNum}
+                    onChange={(e) => setEditAssistNum(e.target.value.replace(/\D/g, ""))}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold text-amber-600">Defensor (2min)</Label>
+                  <Input
+                    value={editDefensivePlayerNum}
+                    onChange={(e) => setEditDefensivePlayerNum(e.target.value.replace(/\D/g, ""))}
+                    className="h-8 text-xs font-bold border-amber-300"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs font-bold">Posição em Quadra</Label>
+                <div className="grid grid-cols-2 gap-1 mt-1">
+                  {POSITIONS.map((pos) => (
+                    <Button
+                      key={pos.value}
+                      type="button"
+                      variant={editPosition === pos.value ? "secondary" : "outline"}
+                      className="h-7 text-xs justify-start font-semibold"
+                      onClick={() => setEditPosition(pos.value)}
+                    >
+                      {pos.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs font-bold">Goleiro em Quadra</Label>
+                <Input
+                  value={editGkName}
+                  onChange={(e) => setEditGkName(e.target.value)}
+                  className="h-8 text-xs mt-1"
+                  placeholder="Nome do goleiro"
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs font-bold">Observações</Label>
+                <Input
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  className="h-8 text-xs mt-1"
+                />
+              </div>
+            </div>
+
+            <div className="md:col-span-6 space-y-3 border-l pl-4">
+              <Label className="text-xs font-bold text-primary">Zona do Gol & Resultado</Label>
+              <GoalMap
+                selected={editZone}
+                onSelect={(z) => setEditZone(z)}
+                size="md"
+              />
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Resultado do Lance:</Label>
+                <select
+                  className="w-full h-8 text-xs font-bold bg-background border rounded px-2"
+                  value={editResult}
+                  onChange={(e) => setEditResult(e.target.value as ShotResult)}
+                >
+                  {RESULTS.map((r) => (
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button size="sm" variant="ghost" onClick={() => setEditingShot(null)}>
+              Cancelar
+            </Button>
+            <Button
+              size="sm"
+              variant="default"
+              className="font-bold bg-accent hover:bg-accent/90"
+              onClick={handleSaveEditedShot}
+            >
+              <Check className="h-4 w-4 mr-1" /> Salvar Alterações no Lance
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* TIMELINE INTEGRADA DE LANCES DA PARTIDA */}
       <Card>
         <CardContent className="py-5">
@@ -1107,11 +1328,28 @@ export function VideoFirstTagging({
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground italic">{s.notes || "—"}</TableCell>
                       <TableCell>
-                        {onRemoveShot && (
-                          <Button size="sm" variant="ghost" onClick={() => onRemoveShot(s.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-accent hover:bg-accent/10"
+                            onClick={() => handleOpenEditModal(s)}
+                            title="Editar Detalhes deste Lance"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
                           </Button>
-                        )}
+                          {onRemoveShot && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                              onClick={() => onRemoveShot(s.id)}
+                              title="Excluir Lance"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
