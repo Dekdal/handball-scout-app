@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Video, Play, Pause, RotateCcw, Clock, Gauge, Trash2, Sparkles, Check, Crosshair, MapPin, Palette, UserCheck, ShieldCheck, UserPlus, Pencil } from "lucide-react";
+import { Video, Play, Pause, RotateCcw, Clock, Gauge, Trash2, Sparkles, Check, Crosshair, MapPin, Palette, UserCheck, ShieldCheck, UserPlus, Pencil, Volume2, VolumeX } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -191,6 +191,17 @@ export function VideoFirstTagging({
   const [selectedSanctionReason, setSelectedSanctionReason] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [dominantHand, setDominantHand] = useState<string>("destra");
+
+  const [isMuted, setIsMuted] = useState<boolean>(false);
+
+  // Alternar mudo do áudio do vídeo
+  const toggleMute = () => {
+    if (videoRef.current) {
+      const nextMuted = !videoRef.current.muted;
+      videoRef.current.muted = nextMuted;
+      setIsMuted(nextMuted);
+    }
+  };
 
   // Ajustar velocidade de reprodução do vídeo
   const handleSpeedChange = (speed: number) => {
@@ -546,6 +557,18 @@ export function VideoFirstTagging({
                 }}
               >
                 +5s
+              </Button>
+
+              <Button
+                size="sm"
+                variant={isMuted ? "destructive" : "outline"}
+                className="text-xs font-bold gap-1 shadow-xs"
+                disabled={!config.videoUrl}
+                onClick={toggleMute}
+                title={isMuted ? "Ativar Áudio do Vídeo" : "Mutar Áudio do Vídeo"}
+              >
+                {isMuted ? <VolumeX className="h-4 w-4 text-white" /> : <Volume2 className="h-4 w-4 text-accent" />}
+                {isMuted ? "Mutado" : "Áudio"}
               </Button>
             </div>
 
