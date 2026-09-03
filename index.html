@@ -29,11 +29,12 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
+      // Desativar cache do Service Worker para garantir atualizações em tempo real sem Ctrl+F5
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js')
-            .then((reg) => console.log('PWA Service Worker registrado com sucesso!', reg))
-            .catch((err) => console.log('Falha ao registrar Service Worker:', err));
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (let registration of registrations) {
+            registration.unregister();
+          }
         });
       }
     </script>
