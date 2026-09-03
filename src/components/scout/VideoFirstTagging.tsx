@@ -272,8 +272,8 @@ export function VideoFirstTagging({
     }
   };
 
-  // ABRIR POP-UP MODAL E CAPTURAR TIMESTAMP EXATO
-  const handleOpenTaggingModal = () => {
+  // ABRIR POP-UP MODAL E CAPTURAR TIMESTAMP EXATO COM POSSE DE BOLA DEFINIDA
+  const handleOpenTaggingModal = (targetPossession?: string) => {
     if (videoRef.current) {
       if (!videoRef.current.paused) {
         videoRef.current.pause();
@@ -283,6 +283,9 @@ export function VideoFirstTagging({
       setCapturedTimestamp(typeof time === "number" && !isNaN(time) ? Math.max(0, time) : 0);
     } else {
       setCapturedTimestamp(typeof currentVideoTime === "number" && !isNaN(currentVideoTime) ? Math.max(0, currentVideoTime) : 0);
+    }
+    if (targetPossession) {
+      setPossession(targetPossession);
     }
     setIsModalOpen(true);
   };
@@ -558,15 +561,27 @@ export function VideoFirstTagging({
               </Button>
             </div>
 
-            <Button
-              size="sm"
-              variant="default"
-              className="font-bold text-xs bg-amber-500 hover:bg-amber-600 text-amber-950 shadow"
-              disabled={!config.videoUrl}
-              onClick={handleOpenTaggingModal}
-            >
-              🎯 Marcar Jogada Neste Instante ({secondsToTimeString(currentVideoTime)})
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                variant="default"
+                className="font-extrabold text-xs bg-primary hover:bg-primary/90 text-primary-foreground shadow-md gap-1.5"
+                disabled={!config.videoUrl}
+                onClick={() => handleOpenTaggingModal(teamName)}
+              >
+                🛡️ Marcar Nosso Ataque ({teamName})
+              </Button>
+              
+              <Button
+                size="sm"
+                variant="default"
+                className="font-extrabold text-xs bg-amber-600 hover:bg-amber-700 text-white shadow-md gap-1.5"
+                disabled={!config.videoUrl}
+                onClick={() => handleOpenTaggingModal(opponentName)}
+              >
+                ⚠️ Marcar Ataque Rival ({opponentName})
+              </Button>
+            </div>
           </div>
 
         </CardContent>
@@ -673,26 +688,39 @@ export function VideoFirstTagging({
             
             {/* COLUNA ESQUERDA: PARÂMETROS E MAPA 2D DE MEIA-QUADRA (6 COLS) */}
             <div className="md:col-span-6 space-y-4">
-              <div>
-                <Label className="text-xs font-bold text-muted-foreground uppercase">Equipe em Posse</Label>
-                <div className="flex gap-1.5 mt-1">
+              {/* SELETOR EM DESTAQUE DE EQUIPE EM POSSE NA MODAL */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                  Time Atacando Neste Lance:
+                </Label>
+                <div className="grid grid-cols-2 gap-2 p-1.5 bg-muted/80 rounded-xl border">
                   <Button
-                    size="xs"
+                    size="sm"
                     type="button"
-                    variant={possession === teamName ? "default" : "outline"}
-                    className="flex-1 font-bold text-xs"
+                    variant={possession === teamName ? "default" : "ghost"}
+                    className={cn(
+                      "font-extrabold text-xs h-9 gap-1.5 border transition-all",
+                      possession === teamName
+                        ? "bg-primary text-primary-foreground border-primary shadow-md"
+                        : "opacity-75 hover:opacity-100"
+                    )}
                     onClick={() => setPossession(teamName)}
                   >
-                    🛡️ {teamName}
+                    🛡️ NOSSO ATAQUE ({teamName})
                   </Button>
                   <Button
-                    size="xs"
+                    size="sm"
                     type="button"
-                    variant={possession === opponentName ? "destructive" : "outline"}
-                    className="flex-1 font-bold text-xs"
+                    variant={possession === opponentName ? "destructive" : "ghost"}
+                    className={cn(
+                      "font-extrabold text-xs h-9 gap-1.5 border transition-all",
+                      possession === opponentName
+                        ? "bg-amber-600 text-white border-amber-600 shadow-md"
+                        : "opacity-75 hover:opacity-100"
+                    )}
                     onClick={() => setPossession(opponentName)}
                   >
-                    ⚠️ {opponentName}
+                    ⚠️ ATAQUE RIVAL ({opponentName})
                   </Button>
                 </div>
               </div>
