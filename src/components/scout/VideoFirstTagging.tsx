@@ -688,40 +688,31 @@ export function VideoFirstTagging({
             
             {/* COLUNA ESQUERDA: PARÂMETROS E MAPA 2D DE MEIA-QUADRA (6 COLS) */}
             <div className="md:col-span-6 space-y-4">
-              {/* SELETOR EM DESTAQUE DE EQUIPE EM POSSE NA MODAL */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
-                  Time Atacando Neste Lance:
-                </Label>
-                <div className="grid grid-cols-2 gap-2 p-1.5 bg-muted/80 rounded-xl border">
-                  <Button
-                    size="sm"
-                    type="button"
-                    variant={possession === teamName ? "default" : "ghost"}
-                    className={cn(
-                      "font-extrabold text-xs h-9 gap-1.5 border transition-all",
-                      possession === teamName
-                        ? "bg-primary text-primary-foreground border-primary shadow-md"
-                        : "opacity-75 hover:opacity-100"
-                    )}
-                    onClick={() => setPossession(teamName)}
-                  >
-                    🛡️ NOSSO ATAQUE ({teamName})
-                  </Button>
-                  <Button
-                    size="sm"
-                    type="button"
-                    variant={possession === opponentName ? "destructive" : "ghost"}
-                    className={cn(
-                      "font-extrabold text-xs h-9 gap-1.5 border transition-all",
-                      possession === opponentName
-                        ? "bg-amber-600 text-white border-amber-600 shadow-md"
-                        : "opacity-75 hover:opacity-100"
-                    )}
-                    onClick={() => setPossession(opponentName)}
-                  >
-                    ⚠️ ATAQUE RIVAL ({opponentName})
-                  </Button>
+              {/* BANNER INDICATIVO DA EQUIPE ATACANTE */}
+              <div className={cn(
+                "p-3 rounded-xl border flex items-center justify-between shadow-xs font-bold text-xs",
+                possession === teamName
+                  ? "bg-primary/10 border-primary/30 text-primary"
+                  : "bg-amber-500/15 border-amber-500/40 text-amber-900 dark:text-amber-300"
+              )}>
+                <div className="flex items-center gap-2">
+                  {possession === teamName ? (
+                    <>
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">🛡️</span>
+                      <div>
+                        <p className="font-extrabold uppercase tracking-wide">Ataque do Nosso Time ({teamName})</p>
+                        <p className="text-[10px] text-muted-foreground font-normal">Arremessos e estatísticas vinculados à equipe {teamName}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-600 text-white text-xs">⚠️</span>
+                      <div>
+                        <p className="font-extrabold uppercase tracking-wide">Ataque do Time Adversário ({opponentName})</p>
+                        <p className="text-[10px] text-muted-foreground font-normal">Arremessos e estatísticas vinculados à equipe {opponentName}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 

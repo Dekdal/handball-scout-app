@@ -25,7 +25,7 @@ export function PlayerProfile({ shots, teamName, game }: Props) {
   const ourPlayerNumbers = Array.from(
     new Set(
       shots
-        .filter((s) => !s.possession_team || s.possession_team === teamName)
+        .filter((s) => !s.possession_team || s.possession_team.trim().toLowerCase() === teamName.trim().toLowerCase())
         .flatMap((s) => [s.player_number, s.assist_number])
         .filter((n): n is number => n != null)
     )
@@ -35,7 +35,7 @@ export function PlayerProfile({ shots, teamName, game }: Props) {
   const oppPlayerNumbers = Array.from(
     new Set(
       shots
-        .filter((s) => s.possession_team === opponentName)
+        .filter((s) => Boolean(s.possession_team) && s.possession_team.trim().toLowerCase() !== teamName.trim().toLowerCase())
         .flatMap((s) => [s.player_number, s.assist_number])
         .filter((n): n is number => n != null)
     )
@@ -50,20 +50,29 @@ export function PlayerProfile({ shots, teamName, game }: Props) {
     setSelectedPlayer("ALL");
   };
 
+  const isOurTeamSelected = selectedTeam.trim().toLowerCase() === teamName.trim().toLowerCase();
+
+  const isShotOfSelectedTeam = (s: Shot) => {
+    if (!s.possession_team) return isOurTeamSelected;
+    const normShotTeam = s.possession_team.trim().toLowerCase();
+    const normTeamName = teamName.trim().toLowerCase();
+    return isOurTeamSelected ? normShotTeam === normTeamName : normShotTeam !== normTeamName;
+  };
+
   const playerShots = shots.filter((s) => {
-    const matchTeam = selectedTeam === teamName ? (!s.possession_team || s.possession_team === teamName) : s.possession_team === opponentName;
+    const matchTeam = isShotOfSelectedTeam(s);
     if (selectedPlayer === "ALL") return matchTeam;
     return matchTeam && (s.player_number === selectedPlayer || s.assist_number === selectedPlayer);
   });
 
   const playerAttacks = shots.filter((s) => {
-    const matchTeam = selectedTeam === teamName ? (!s.possession_team || s.possession_team === teamName) : s.possession_team === opponentName;
+    const matchTeam = isShotOfSelectedTeam(s);
     if (selectedPlayer === "ALL") return matchTeam;
     return matchTeam && s.player_number === selectedPlayer;
   });
 
   const playerAssists = shots.filter((s) => {
-    const matchTeam = selectedTeam === teamName ? (!s.possession_team || s.possession_team === teamName) : s.possession_team === opponentName;
+    const matchTeam = isShotOfSelectedTeam(s);
     if (selectedPlayer === "ALL") return matchTeam && s.assist_number != null;
     return matchTeam && s.assist_number === selectedPlayer;
   });
