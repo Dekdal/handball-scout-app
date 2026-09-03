@@ -419,7 +419,7 @@ export function VideoFirstTagging({
       sector: possession === teamName ? "Ataque" : "Defesa",
       position: selectedPosition,
       shot_type: selectedShotType,
-      zone: selectedZone || "B2",
+      zone: (result === "perda" || isDisciplinaryCard) ? (selectedZone || "B2") : (selectedZone || "B2"),
       result,
       player_number: playerNum ? Number(playerNum) : undefined,
       assist_number: assistNum ? Number(assistNum) : undefined,

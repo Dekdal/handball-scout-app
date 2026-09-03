@@ -31,14 +31,25 @@ export type Shot = {
   drawing_data?: string;
 };
 
+export function isActualShot(s: Shot): boolean {
+  if (!s || !s.result) return false;
+  const res = String(s.result).toLowerCase();
+  if (res.startsWith("perda") || res.startsWith("tatica") || res.startsWith("cartao_") || res === "2min") {
+    return false;
+  }
+  return true;
+}
+
 // 1. MÉTRICAS GERAIS DA PARTIDA
 export function computeStats(shots: Shot[] = []) {
   const safeShots = Array.isArray(shots) ? shots : [];
-  const total = safeShots.length;
-  const gols = safeShots.filter((s) => s.result === "gol").length;
-  const defesas = safeShots.filter((s) => s.result === "defesa").length;
-  const trave = safeShots.filter((s) => s.result === "trave").length;
-  const fora = safeShots.filter((s) => s.result === "fora").length;
+  const actualShots = safeShots.filter(isActualShot);
+
+  const total = actualShots.length;
+  const gols = actualShots.filter((s) => s.result === "gol").length;
+  const defesas = actualShots.filter((s) => s.result === "defesa").length;
+  const trave = actualShots.filter((s) => s.result === "trave").length;
+  const fora = actualShots.filter((s) => s.result === "fora").length;
   const perdas = safeShots.filter((s) => s.result && s.result.startsWith("perda")).length;
 
   const taxaConversao = total > 0 ? Math.round((gols / total) * 100) : 0;
@@ -56,7 +67,8 @@ export function computeGoalHeatmap(shots: Shot[] = []) {
   };
 
   const safeShots = Array.isArray(shots) ? shots : [];
-  safeShots.forEach((s) => {
+  const actualShots = safeShots.filter(isActualShot);
+  actualShots.forEach((s) => {
     if (s && s.zone && counts[s.zone] !== undefined) {
       counts[s.zone]++;
     }
@@ -74,7 +86,8 @@ export function heatmapBy(shots: Shot[] = [], filterFn?: (s: Shot) => boolean) {
   };
 
   const safeShots = Array.isArray(shots) ? shots : [];
-  const list = typeof filterFn === "function" ? safeShots.filter(filterFn) : safeShots;
+  const actualShots = safeShots.filter(isActualShot);
+  const list = typeof filterFn === "function" ? actualShots.filter(filterFn) : actualShots;
   list.forEach((s) => {
     if (s && s.zone && counts[s.zone] !== undefined) {
       counts[s.zone]++;
@@ -87,8 +100,9 @@ export function heatmapBy(shots: Shot[] = [], filterFn?: (s: Shot) => boolean) {
 // 3. ESTATÍSTICAS POR POSIÇÃO EM QUADRA
 export function computePositionStats(shots: Shot[] = []) {
   const safeShots = Array.isArray(shots) ? shots : [];
+  const actualShots = safeShots.filter(isActualShot);
   return POSITIONS.map((pos) => {
-    const list = safeShots.filter((s) => s.position === pos.value);
+    const list = actualShots.filter((s) => s.position === pos.value);
     const total = list.length;
     const gols = list.filter((s) => s.result === "gol").length;
     const taxa = total > 0 ? Math.round((gols / total) * 100) : 0;
@@ -111,8 +125,9 @@ export function statsByPosition(shots: Shot[] = []) {
 // 4. ESTATÍSTICAS POR DISTÂNCIA DA LINHA (6m, 7m, 9m)
 export function computeShotTypeStats(shots: Shot[] = []) {
   const safeShots = Array.isArray(shots) ? shots : [];
+  const actualShots = safeShots.filter(isActualShot);
   return SHOT_TYPES.map((type) => {
-    const list = safeShots.filter((s) => s.shot_type === type.value);
+    const list = actualShots.filter((s) => s.shot_type === type.value);
     const total = list.length;
     const defesas = list.filter((s) => s.result === "defesa").length;
     const gols = list.filter((s) => s.result === "gol").length;
@@ -148,9 +163,13 @@ export function computePlayerLeaderboard(shots: Shot[] = [], teamName?: string) 
       if (!playerMap[s.player_number]) {
         playerMap[s.player_number] = { numero: s.player_number, player_number: s.player_number, gols: 0, total: 0, assistencias: 0, perdas: 0 };
       }
-      playerMap[s.player_number].total++;
-      if (s.result === "gol") playerMap[s.player_number].gols++;
-      if (s.result && s.result.startsWith("perda")) playerMap[s.player_number].perdas++;
+      if (isActualShot(s)) {
+        playerMap[s.player_number].total++;
+        if (s.result === "gol") playerMap[s.player_number].gols++;
+      }
+      if (s.result && s.result.startsWith("perda")) {
+        playerMap[s.player_number].perdas++;
+      }
     }
 
     if (s.assist_number != null) {

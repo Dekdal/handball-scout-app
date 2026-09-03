@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { GoalMap } from "./GoalMap";
 import { CourtMap } from "./CourtMap";
 import { positionLabel, formattedResultLabel, RESULTS, TACTICAL_PLAY_TYPES } from "@/lib/scout/constants";
-import { heatmapBy, type Shot } from "@/lib/scout/stats";
+import { heatmapBy, isActualShot, type Shot } from "@/lib/scout/stats";
 import { exportSinglePlayerPDF } from "@/lib/scout/exports";
 import { cn } from "@/lib/utils";
 
@@ -77,13 +77,14 @@ export function PlayerProfile({ shots, teamName, game }: Props) {
     return matchTeam && s.assist_number === selectedPlayer;
   });
 
-  const totalArremessos = playerAttacks.length;
-  const totalGols = playerAttacks.filter((s) => s.result === "gol").length;
+  const actualPlayerShots = playerAttacks.filter(isActualShot);
+  const totalArremessos = actualPlayerShots.length;
+  const totalGols = actualPlayerShots.filter((s) => s.result === "gol").length;
   const taxaEficiencia = totalArremessos > 0 ? Math.round((totalGols / totalArremessos) * 100) : 0;
-  const totalPerdas = playerAttacks.filter((s) => s.result.startsWith("perda")).length;
+  const totalPerdas = playerAttacks.filter((s) => s.result && s.result.startsWith("perda")).length;
 
-  const playerHeatmapGeral = heatmapBy(playerAttacks, () => true);
-  const playerHeatmapGols = heatmapBy(playerAttacks, (s) => s.result === "gol");
+  const playerHeatmapGeral = heatmapBy(actualPlayerShots, () => true);
+  const playerHeatmapGols = heatmapBy(actualPlayerShots, (s) => s.result === "gol");
 
   return (
     <div className="space-y-6">
