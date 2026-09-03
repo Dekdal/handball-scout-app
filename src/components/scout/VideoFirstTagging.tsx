@@ -405,18 +405,6 @@ export function VideoFirstTagging({
                 <Palette className="mr-1.5 h-4 w-4 text-purple-600" />
                 🎨 Modo Desenho
               </Button>
-
-              {/* BOTÃO GRANDE DE ABRIR POP-UP MODAL */}
-              <Button
-                size="sm"
-                variant="default"
-                className="font-bold text-xs bg-amber-500 hover:bg-amber-600 text-amber-950 shadow-md animate-pulse"
-                disabled={!config.videoUrl}
-                onClick={handleOpenTaggingModal}
-              >
-                <Sparkles className="mr-1.5 h-4 w-4" />
-                🎯 Marcar Jogada
-              </Button>
             </div>
           </div>
 
