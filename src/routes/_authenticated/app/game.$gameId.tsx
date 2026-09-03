@@ -242,6 +242,19 @@ async function updateShotApi(gameId: string, shotId: string, updates: any) {
 }
 
 function rawToShot(r: RawShot): Shot {
+  if (!r) {
+    return {
+      id: Math.random().toString(),
+      player_number: null,
+      assist_number: null,
+      shot_type: "6m",
+      position: "ponta_esq",
+      zone: "B2",
+      result: "gol",
+      game_time: "00:00",
+      period: "1º Tempo",
+    };
+  }
   let res = r.result || "";
   let reason: string | null = r.turnover_reason || null;
   let periodName = r.period || "1º Tempo";
@@ -344,7 +357,7 @@ function GameScoutPage() {
     refetchInterval: 2000,
   });
 
-  const shots = rawShots.map(rawToShot);
+  const shots = Array.isArray(rawShots) ? rawShots.filter(Boolean).map(rawToShot) : [];
 
   // Lista de goleiros da partida
   const goalkeeperRoster = Array.from(
