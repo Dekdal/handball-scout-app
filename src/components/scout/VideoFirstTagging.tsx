@@ -186,6 +186,7 @@ export function VideoFirstTagging({
 
   const [playerNum, setPlayerNum] = useState<string>("");
   const [assistNum, setAssistNum] = useState<string>("");
+  const [defensivePlayerNum, setDefensivePlayerNum] = useState<string>("");
   const [isPseudoAssist, setIsPseudoAssist] = useState<boolean>(false);
   const [selectedTurnover, setSelectedTurnover] = useState<string>("");
   const [selectedSanctionReason, setSelectedSanctionReason] = useState<string>("");
@@ -326,7 +327,11 @@ export function VideoFirstTagging({
 
     const offset = period === "2º Tempo" ? (config?.offset2TSeconds || 0) : (config?.offset1TSeconds || 0);
     const matchTimeSeconds = Math.max(0, exactVideoTime - offset);
-    const formattedMatchTime = secondsToTimeString(matchTimeSeconds);
+    const defensiveTeamName = possession === teamName ? opponentName : teamName;
+    const defensiveNote = defensivePlayerNum.trim()
+      ? `Defensor #${defensivePlayerNum.trim()} (${defensiveTeamName})`
+      : "";
+    const combinedNotes = [defensiveNote, notes.trim()].filter(Boolean).join(" | ");
 
     onSubmit({
       possession_team: possession,
@@ -343,7 +348,8 @@ export function VideoFirstTagging({
       is_pseudo_assist: isPseudoAssist,
       tactical_play: selectedTacticalPlay,
       turnover_reason: (result === "perda" || isDisciplinaryCard) ? (finalTurnover || undefined) : undefined,
-      notes: notes.trim() || undefined,
+      defensive_sector: defensivePlayerNum ? `defensor_${defensivePlayerNum.trim()}` : undefined,
+      notes: combinedNotes || undefined,
       dominant_hand: dominantHand,
       shot_origin_x: selectedCourtPoint?.x,
       shot_origin_y: selectedCourtPoint?.y,
@@ -356,6 +362,7 @@ export function VideoFirstTagging({
     setSelectedCourtPoint(null);
     setPlayerNum("");
     setAssistNum("");
+    setDefensivePlayerNum("");
     setIsPseudoAssist(false);
     setSelectedTurnover("");
     setNotes("");
@@ -901,12 +908,12 @@ export function VideoFirstTagging({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label className="text-xs font-semibold">Nº Atleta</Label>
+                  <Label className="text-xs font-semibold">Nº Atacante</Label>
                   <Input
                     placeholder="Ex: 10"
-                    className="h-8 text-xs"
+                    className="h-8 text-xs font-bold"
                     inputMode="numeric"
                     value={playerNum}
                     onChange={(e) => setPlayerNum(e.target.value.replace(/\D/g, ""))}
@@ -920,6 +927,18 @@ export function VideoFirstTagging({
                     inputMode="numeric"
                     value={assistNum}
                     onChange={(e) => setAssistNum(e.target.value.replace(/\D/g, ""))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                    Defensor (2min)
+                  </Label>
+                  <Input
+                    placeholder={possession === teamName ? `Ex: #5 (${opponentName})` : `Ex: #3 (${teamName})`}
+                    className="h-8 text-xs font-bold border-amber-300 bg-amber-500/10"
+                    inputMode="numeric"
+                    value={defensivePlayerNum}
+                    onChange={(e) => setDefensivePlayerNum(e.target.value.replace(/\D/g, ""))}
                   />
                 </div>
               </div>
