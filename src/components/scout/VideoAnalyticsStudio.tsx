@@ -21,10 +21,11 @@ interface Props {
   teamName: string;
   onAddShot?: (draft: any) => void;
   onRemoveShot?: (shotId: string) => void;
+  onUpdateShot?: (shotId: string, updates: any) => void;
   readOnly?: boolean;
 }
 
-export function VideoAnalyticsStudio({ game, shots, teamName, onAddShot, onRemoveShot, readOnly = false }: Props) {
+export function VideoAnalyticsStudio({ game, shots, teamName, onAddShot, onRemoveShot, onUpdateShot, readOnly = false }: Props) {
   const opponentName = game?.opponent || "Adversário";
 
   // MODO DA TELA: "tagging" (MARCAÇÃO NO VÍDEO) ou "studio" (PLAYLISTS E FILTROS)
