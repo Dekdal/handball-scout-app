@@ -175,6 +175,7 @@ export function VideoFirstTagging({
 
   // Parâmetros da Marcação dentro do Pop-up
   const [possession, setPossession] = useState<string>(teamName);
+  const [opponentGkName, setOpponentGkName] = useState<string>(`${opponentName} (Goleiro)`);
   const [period, setPeriod] = useState<string>("1º Tempo");
   const [selectedShotType, setSelectedShotType] = useState<ShotType>("6m");
   const [selectedPosition, setSelectedPosition] = useState<Position>("ponta_esq");
@@ -332,7 +333,7 @@ export function VideoFirstTagging({
       dominant_hand: dominantHand,
       shot_origin_x: selectedCourtPoint?.x,
       shot_origin_y: selectedCourtPoint?.y,
-      goalkeeper_name: activeGkName,
+      goalkeeper_name: possession === teamName ? (opponentGkName.trim() || `${opponentName} (Goleiro)`) : activeGkName,
       numerical_status: numericalStatus || "6x6",
     });
 
@@ -696,44 +697,69 @@ export function VideoFirstTagging({
                 </div>
               </div>
 
-              {/* SELEÇÃO E TROCA DO GOLEIRO EM QUADRA NO POP-UP */}
-              <div className="p-2.5 bg-emerald-50/80 dark:bg-emerald-950/20 rounded-lg border border-emerald-300 space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase flex items-center gap-1">
-                    <UserCheck className="h-3.5 w-3.5" /> Goleiro Defendendo no Lance
-                  </Label>
-                  <span className="text-[10px] font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-300">
-                    Na Quadra: {activeGkName}
-                  </span>
+              {/* SELEÇÃO E TROCA DO GOLEIRO EM QUADRA NO POP-UP (ADAPTATIVO CONFORME POSSE) */}
+              {possession === teamName ? (
+                <div className="p-2.5 bg-amber-50/80 dark:bg-amber-950/20 rounded-lg border border-amber-300 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-amber-900 dark:text-amber-300 uppercase flex items-center gap-1">
+                      <UserCheck className="h-3.5 w-3.5 text-amber-600" /> Meta Atacada: Goleiro do {opponentName}
+                    </Label>
+                    <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+                      Nosso Ataque
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      size={1}
+                      className="h-7 text-xs font-bold bg-white dark:bg-card border-amber-300"
+                      value={opponentGkName}
+                      onChange={(e) => setOpponentGkName(e.target.value)}
+                      placeholder={`Ex: Goleiro ${opponentName} ou #12 Rival`}
+                    />
+                  </div>
+                  <p className="text-[11px] text-amber-800 dark:text-amber-400 italic">
+                    * Nosso time ataca no goleiro adversário. Os gols e defesas neste lance contabilizam contra a meta rival.
+                  </p>
                 </div>
+              ) : (
+                <div className="p-2.5 bg-emerald-50/80 dark:bg-emerald-950/20 rounded-lg border border-emerald-300 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase flex items-center gap-1">
+                      <UserCheck className="h-3.5 w-3.5" /> Meta Defendida: Nosso Goleiro ({teamName})
+                    </Label>
+                    <span className="text-[10px] font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-300">
+                      Na Quadra: {activeGkName}
+                    </span>
+                  </div>
 
-                <div className="flex flex-wrap gap-1">
-                  {goalkeepers.map((gk) => {
-                    const isActive = gk.id === activeGoalkeeperId;
-                    return (
-                      <Button
-                        key={gk.id}
-                        type="button"
-                        size="xs"
-                        variant={isActive ? "default" : "outline"}
-                        className={cn("text-xs font-bold h-7", isActive && "bg-emerald-600 text-white")}
-                        onClick={() => setActiveGoalkeeperId(gk.id)}
-                      >
-                        🧤 {gk.name}
-                      </Button>
-                    );
-                  })}
-                  <Button
-                    type="button"
-                    size="xs"
-                    variant="ghost"
-                    className="h-7 text-xs font-bold text-emerald-700 hover:bg-emerald-100"
-                    onClick={() => setIsAddGkDialogOpen(true)}
-                  >
-                    <UserPlus className="h-3 w-3 mr-1" /> Novo
-                  </Button>
+                  <div className="flex flex-wrap gap-1">
+                    {goalkeepers.map((gk) => {
+                      const isActive = gk.id === activeGoalkeeperId;
+                      return (
+                        <Button
+                          key={gk.id}
+                          type="button"
+                          size="xs"
+                          variant={isActive ? "default" : "outline"}
+                          className={cn("text-xs font-bold h-7", isActive && "bg-emerald-600 text-white")}
+                          onClick={() => setActiveGoalkeeperId(gk.id)}
+                        >
+                          🧤 {gk.name}
+                        </Button>
+                      );
+                    })}
+                    <Button
+                      type="button"
+                      size="xs"
+                      variant="ghost"
+                      className="h-7 text-xs font-bold text-emerald-700 hover:bg-emerald-100"
+                      onClick={() => setIsAddGkDialogOpen(true)}
+                    >
+                      <UserPlus className="h-3 w-3 mr-1" /> Novo
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* MAPA DE ORIGEM DO ARREMESSO NA MEIA-QUADRA (X/Y) */}
               <CourtMap

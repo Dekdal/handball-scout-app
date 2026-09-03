@@ -305,7 +305,7 @@ export function computeGoalkeeperProfiles(shots: Shot[] = [], defaultGkName?: st
     gks.unshift(defaultGkName);
   }
   return gks.map((name) => {
-    const gkShots = safeShots.filter((s) => !s.goalkeeper_name || s.goalkeeper_name === name);
+    const gkShots = safeShots.filter((s) => s && s.goalkeeper_name === name);
     const totalArremessos = gkShots.length;
     const defesas = gkShots.filter((s) => s.result === "defesa").length;
     const golsSofridos = gkShots.filter((s) => s.result === "gol").length;
