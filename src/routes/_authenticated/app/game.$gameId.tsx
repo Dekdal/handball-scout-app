@@ -145,6 +145,10 @@ async function addShotApi(gameId: string, userId: string, payload: any) {
     dbResult = `${dbResult}|xy:${payload.shot_origin_x},${payload.shot_origin_y}`;
   }
 
+  if (payload.possession_team) {
+    dbResult = `${dbResult}|poss:${payload.possession_team}`;
+  }
+
   const periodPrefix = payload.period === "2º Tempo" ? "2T" : "1T";
   const dbTime = `${periodPrefix} ${payload.game_time || "00:00"}`;
 
@@ -152,12 +156,20 @@ async function addShotApi(gameId: string, userId: string, payload: any) {
     game_id: gameId,
     user_id: userId,
     player_number: payload.player_number ?? null,
+    assist_number: payload.assist_number ?? null,
     position: payload.position || "ponta_esq",
     shot_type: payload.shot_type || "6m",
     zone: payload.zone || "B2",
     result: dbResult,
     game_time: dbTime,
     dominant_hand: payload.dominant_hand || "destra",
+    possession_team: payload.possession_team || null,
+    sector: payload.sector || null,
+    is_pseudo_assist: payload.is_pseudo_assist ?? null,
+    tactical_play: payload.tactical_play || null,
+    numerical_status: payload.numerical_status || "6x6",
+    video_timestamp_seconds: payload.video_timestamp_seconds ?? null,
+    notes: payload.notes || null,
   };
 
   if (payload.goalkeeper_name) {
@@ -166,14 +178,21 @@ async function addShotApi(gameId: string, userId: string, payload: any) {
 
   const { data, error } = await supabase.from("shots").insert([corePayload]).select().single();
   if (error) {
-    // Se a coluna goalkeeper_name ainda não existir na tabela shots do Supabase, executa fallback limpo sem a coluna
-    if (error.message?.includes("goalkeeper_name") || error.code === "PGRST204") {
-      delete corePayload.goalkeeper_name;
-      const fallback = await supabase.from("shots").insert([corePayload]).select().single();
-      if (fallback.error) throw fallback.error;
-      return fallback.data;
-    }
-    throw error;
+    const minimalPayload = {
+      game_id: gameId,
+      user_id: userId,
+      player_number: payload.player_number ?? null,
+      position: payload.position || "ponta_esq",
+      shot_type: payload.shot_type || "6m",
+      zone: payload.zone || "B2",
+      result: dbResult,
+      game_time: dbTime,
+      dominant_hand: payload.dominant_hand || "destra",
+      goalkeeper_name: payload.goalkeeper_name || null,
+    };
+    const fallback = await supabase.from("shots").insert([minimalPayload]).select().single();
+    if (fallback.error) throw fallback.error;
+    return fallback.data;
   }
   return data;
 }
@@ -192,6 +211,15 @@ function rawToShot(r: RawShot): Shot {
   let originX: number | undefined = undefined;
   let originY: number | undefined = undefined;
   let drawingData: string | undefined = undefined;
+  let extractedPossession: string | undefined = undefined;
+
+  if (res.includes("|poss:")) {
+    const parts = res.split("|poss:");
+    res = parts[0];
+    if (parts[1]) {
+      extractedPossession = parts[1].split("|")[0];
+    }
+  }
 
   if (res.includes("|xy:")) {
     const parts = res.split("|xy:");
@@ -223,6 +251,8 @@ function rawToShot(r: RawShot): Shot {
     timeOnly = timeOnly.replace("2T ", "");
   }
 
+  const finalPossessionTeam = r.possession_team || extractedPossession;
+
   return {
     id: r.id,
     player_number: r.player_number,
@@ -233,7 +263,7 @@ function rawToShot(r: RawShot): Shot {
     result: res as any,
     game_time: timeOnly,
     period: periodName,
-    possession_team: r.possession_team,
+    possession_team: finalPossessionTeam,
     sector: r.sector,
     is_pseudo_assist: r.is_pseudo_assist,
     tactical_play: r.tactical_play,
