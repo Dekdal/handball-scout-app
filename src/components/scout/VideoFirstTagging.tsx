@@ -327,6 +327,7 @@ export function VideoFirstTagging({
 
     const offset = period === "2º Tempo" ? (config?.offset2TSeconds || 0) : (config?.offset1TSeconds || 0);
     const matchTimeSeconds = Math.max(0, exactVideoTime - offset);
+    const formattedMatchTime = secondsToTimeString(matchTimeSeconds);
     const defensiveTeamName = possession === teamName ? opponentName : teamName;
     const defensiveNote = defensivePlayerNum.trim()
       ? `Defensor #${defensivePlayerNum.trim()} (${defensiveTeamName})`
@@ -356,6 +357,8 @@ export function VideoFirstTagging({
       goalkeeper_name: possession === teamName ? (opponentGkName.trim() || `${opponentName} (Goleiro)`) : activeGkName,
       numerical_status: numericalStatus || "6x6",
     });
+
+    toast.success("Lance / Punição gravada com sucesso!");
 
     // Resetar formulário, fechar o Pop-up Modal e retomar a reprodução do vídeo!
     setSelectedZone(null);
