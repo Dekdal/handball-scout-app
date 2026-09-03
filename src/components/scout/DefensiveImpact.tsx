@@ -191,14 +191,30 @@ export function DefensiveImpact({ shots = [], teamName, opponentName }: Props) {
 
                   const reasonText = s.turnover_reason ? sanctionReasonLabel(s.turnover_reason) : "—";
 
+                  // Extrai o número do defensor punido (se houver)
+                  let defenderNum: string | null = null;
+                  if (s.defensive_sector && s.defensive_sector.startsWith("defensor_")) {
+                    defenderNum = s.defensive_sector.replace("defensor_", "");
+                  } else if (s.notes && s.notes.includes("Defensor #")) {
+                    const match = s.notes.match(/Defensor #(\d+)/);
+                    if (match) defenderNum = match[1];
+                  }
+
+                  // Se houver defensor indicado, a equipe punida é o time defensor (oposto da posse)
+                  const isPossessionOurTeam = !s.possession_team || s.possession_team.trim().toLowerCase() === teamName.trim().toLowerCase();
+                  const punishedTeam = defenderNum ? (isPossessionOurTeam ? opponentName : teamName) : (s.possession_team || teamName);
+                  const punishedPlayer = defenderNum ? `#${defenderNum} (Defensor)` : (s.player_number ? `#${s.player_number}` : "—");
+
                   return (
                     <TableRow key={s.id}>
                       <TableCell className="font-mono text-xs font-bold text-primary">
                         {s.period} ({s.game_time || "00:00"})
                       </TableCell>
-                      <TableCell className="text-xs font-semibold">{s.possession_team || teamName}</TableCell>
-                      <TableCell className="font-bold text-sm">
-                        {s.player_number ? `#${s.player_number}` : "—"}
+                      <TableCell className="text-xs font-bold text-foreground">
+                        {punishedTeam}
+                      </TableCell>
+                      <TableCell className="font-extrabold text-sm text-primary">
+                        {punishedPlayer}
                       </TableCell>
                       <TableCell>
                         <span className={cn("px-2.5 py-1 rounded text-xs font-bold shadow-xs", cardBadgeClass)}>
